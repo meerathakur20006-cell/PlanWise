@@ -34,14 +34,21 @@ pipeline {
                 bat '.venv\\Scripts\\python -m pytest -v'
             }
         }
+
+        stage('Deploy Locally') {
+            steps {
+                echo 'Preparing PlanWise for local deployment'
+                bat '.venv\\Scripts\\python -c "import app; print(\'PlanWise application loaded successfully\')"'
+            }
+        }
     }
 
     post {
         success {
-            echo 'PlanWise CI pipeline completed successfully!'
+            echo 'PlanWise CI/CD pipeline completed successfully!'
         }
         failure {
-            echo 'PlanWise CI pipeline failed. Check the console output.'
+            echo 'PlanWise pipeline failed. Check the console output.'
         }
     }
 }
