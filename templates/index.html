@@ -1,0 +1,200 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlanWise | Project Management</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; background: #f4f5fa; color: #222640; }
+        header { background: #20243a; color: white; padding: 22px 6%; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+        header h1 { margin: 0; }
+        header span { color: #a9b0ff; }
+        main { max-width: 1200px; margin: 32px auto; padding: 0 22px; }
+        .welcome { margin-bottom: 24px; }
+        .muted { color: #777d91; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .card, .panel { background: white; padding: 22px; border-radius: 14px; box-shadow: 0 4px 18px #20243a0b; }
+        .card p { margin: 0 0 10px; color: #777d91; }
+        .card h3 { margin: 0; font-size: 29px; }
+        .layout { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: start; }
+        .panel { margin-bottom: 20px; }
+        .panel h3 { margin-top: 0; }
+        .item { padding: 16px 0; border-bottom: 1px solid #edf0f5; }
+        .item:last-child { border-bottom: none; }
+        .item h4 { margin: 0 0 6px; }
+        .item-top { display: flex; justify-content: space-between; align-items: start; gap: 10px; flex-wrap: wrap; }
+        .tag { display: inline-block; padding: 5px 9px; border-radius: 20px; background: #eef0ff; color: #535bd7; font-size: 12px; }
+        .completed { background: #e2f8eb; color: #16834b; }
+        .planned { background: #eeeef2; color: #55596c; }
+        label { display: block; margin: 13px 0 6px; font-size: 14px; font-weight: 600; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #dfe2ec; border-radius: 8px; font: inherit; background: white; }
+        textarea { resize: vertical; }
+        button { margin-top: 12px; padding: 10px 14px; border: 0; border-radius: 8px; background: #656be8; color: white; cursor: pointer; font-weight: 600; }
+        button:hover { background: #5057d0; }
+        .full-button { width: 100%; }
+        .inline-form { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+        .inline-form select { flex: 1; min-width: 120px; }
+        .inline-form button { margin-top: 0; }
+        .empty { padding: 22px 0; color: #777d91; text-align: center; }
+        footer { text-align: center; padding: 24px; color: #777d91; font-size: 13px; }
+        @media (max-width: 760px) { .layout { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Plan<span>Wise</span></h1>
+    <div>Project Planning &amp; Management</div>
+</header>
+
+<main>
+    <section class="welcome">
+        <h2>Project Overview</h2>
+        <p class="muted">Plan smarter. Track progress. Deliver on time.</p>
+    </section>
+
+    <section class="stats">
+        <div class="card"><p>Total Projects</p><h3>{{ stats.total_projects }}</h3></div>
+        <div class="card"><p>Active Projects</p><h3>{{ stats.active_projects }}</h3></div>
+        <div class="card"><p>Completed Projects</p><h3>{{ stats.completed_tasks }}</h3></div>
+        <div class="card"><p>Total Tasks</p><h3>{{ tasks|length }}</h3></div>
+    </section>
+
+    <section class="layout">
+        <div>
+            <div class="panel">
+                <h3>My Projects</h3>
+                <p class="muted">Your saved projects and deadlines.</p>
+
+                {% if projects %}
+                    {% for project in projects %}
+                    <article class="item">
+                        <div class="item-top">
+                            <div>
+                                <h4>{{ project.name }}</h4>
+                                <div class="muted">{{ project.category }}</div>
+                            </div>
+                            <span class="tag {% if project.status == 'Completed' %}completed{% elif project.status == 'Planned' %}planned{% endif %}">
+                                {{ project.status }}
+                            </span>
+                        </div>
+                        {% if project.description %}
+                            <p>{{ project.description }}</p>
+                        {% endif %}
+                        <p class="muted">Deadline: {{ project.due_date }}</p>
+                    </article>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty">No projects yet. Create one using the form.</div>
+                {% endif %}
+            </div>
+
+            <div class="panel">
+                <h3>Tasks</h3>
+                <p class="muted">Track task priorities, deadlines, and status.</p>
+
+                {% if tasks %}
+                    {% for task in tasks %}
+                    <article class="item">
+                        <div class="item-top">
+                            <div>
+                                <h4>{{ task.title }}</h4>
+                                <div class="muted">Project: {{ task.project_name }}</div>
+                            </div>
+                            <span class="tag {% if task.status == 'Completed' %}completed{% endif %}">
+                                {{ task.status }}
+                            </span>
+                        </div>
+                        {% if task.description %}
+                            <p>{{ task.description }}</p>
+                        {% endif %}
+                        <p class="muted">Priority: {{ task.priority }} · Deadline: {{ task.due_date }}</p>
+
+                        <form class="inline-form" action="{{ url_for('update_task_status', task_id=task.id) }}" method="POST">
+                            <label for="status-{{ task.id }}">Update status:</label>
+                            <select id="status-{{ task.id }}" name="status">
+                                <option value="To Do" {% if task.status == 'To Do' %}selected{% endif %}>To Do</option>
+                                <option value="In Progress" {% if task.status == 'In Progress' %}selected{% endif %}>In Progress</option>
+                                <option value="Completed" {% if task.status == 'Completed' %}selected{% endif %}>Completed</option>
+                            </select>
+                            <button type="submit">Save</button>
+                        </form>
+                    </article>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty">No tasks yet. Add your first task using the form.</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div>
+            <div class="panel">
+                <h3>+ Create a Project</h3>
+                <form action="{{ url_for('create_project') }}" method="POST">
+                    <label for="project-name">Project name *</label>
+                    <input id="project-name" name="name" maxlength="100" required placeholder="Website Redesign">
+
+                    <label for="category">Category *</label>
+                    <select id="category" name="category" required>
+                        <option value="">Choose a category</option>
+                        <option>Development</option>
+                        <option>Design</option>
+                        <option>Marketing</option>
+                        <option>Research</option>
+                        <option>Education</option>
+                        <option>Other</option>
+                    </select>
+
+                    <label for="project-description">Description</label>
+                    <textarea id="project-description" name="description" rows="3" maxlength="1000"></textarea>
+
+                    <label for="project-date">Deadline *</label>
+                    <input id="project-date" name="due_date" type="date" required>
+
+                    <button class="full-button" type="submit">Create Project</button>
+                </form>
+            </div>
+
+            <div class="panel">
+                <h3>+ Add a Task</h3>
+
+                {% if projects %}
+                <form action="{{ url_for('create_task') }}" method="POST">
+                    <label for="project-id">Choose project *</label>
+                    <select id="project-id" name="project_id" required>
+                        <option value="">Select a project</option>
+                        {% for project in projects %}
+                        <option value="{{ project.id }}">{{ project.name }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <label for="task-title">Task title *</label>
+                    <input id="task-title" name="title" maxlength="150" required placeholder="Prepare project proposal">
+
+                    <label for="task-description">Description</label>
+                    <textarea id="task-description" name="description" rows="3" maxlength="1000"></textarea>
+
+                    <label for="priority">Priority *</label>
+                    <select id="priority" name="priority" required>
+                        <option>Low</option>
+                        <option selected>Medium</option>
+                        <option>High</option>
+                    </select>
+
+                    <label for="task-date">Deadline *</label>
+                    <input id="task-date" name="due_date" type="date" required>
+
+                    <button class="full-button" type="submit">Add Task</button>
+                </form>
+                {% else %}
+                    <p class="muted">Create a project first, then you can add tasks to it.</p>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer>PlanWise · Project planning made clearer</footer>
+</body>
+</html>
