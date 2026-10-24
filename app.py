@@ -4,6 +4,7 @@ import sqlite3
 from pathlib import Path
 
 app = Flask(__name__)
+APP_VERSION = "1.0.1"
 DATABASE = Path(__file__).with_name("planwise.db")
 
 def get_db_connection():
