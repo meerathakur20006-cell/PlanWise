@@ -35,12 +35,14 @@ pipeline {
             }
         }
 
-        stage('Deploy Locally') {
-            steps {
-                echo 'Preparing PlanWise for local deployment'
-                bat '.venv\\Scripts\\python -c "import app; print(\'PlanWise application loaded successfully\')"'
-            }
-        }
+        
+stage('Deploy Locally') {
+    steps {
+        echo 'Checking the local PlanWise dashboard'
+        bat 'powershell -NoProfile -Command "$response = Invoke-WebRequest -Uri http://127.0.0.1:5000 -UseBasicParsing; if ($response.StatusCode -ne 200) { exit 1 }; Write-Output \'PlanWise dashboard is responding successfully\'"'
+    }
+}
+
     }
 
     post {
